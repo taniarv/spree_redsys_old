@@ -1,7 +1,7 @@
 SpreeRedsys
 ===========
 
-Spree extension to integrate with Spanish Redsys TPV. 
+Spree extension to integrate with Spanish Redsys TPV. This extension is an based on [spree_sermepa](https://github.com/picazoH/spree_sermepa) and has been modified. 
 
 Installation
 ------------
