@@ -1,0 +1,3 @@
+es:
+  order_processed_successfully: "Su pedido se ha procesado correctamente. Gracias por su compra!!"
+  manual_admin_advert: "Edición manual de pedidos (No usar en caso de duda): completar, finalizar (envía mail), undo completar "

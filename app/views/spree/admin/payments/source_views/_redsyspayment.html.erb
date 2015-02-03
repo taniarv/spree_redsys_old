@@ -1,0 +1,26 @@
+<fieldset>
+
+  <legend><%= t(:Redsys) %></legend>
+
+  <table class="index">
+    <tr data-hook="Redsys_header">
+      <th><%= t(:type) %></th>
+      <th><%= t('spree.date') %></th>
+      <th><%= t(:amount) %></th>
+      <th><%= t(:payment_state) %></th>
+      <th><%= t(:response_code) %></th>
+      <th><%= t(:avs_response) %></th>
+    </tr>
+        <tr data-hook="RedsysPayment_row">
+          <td>
+            <%= payment.source_type %>
+          </td>
+          <td><%= payment.created_at.to_date %></td>
+          <td><%= number_to_currency payment.amount %></td>
+          <td><%= t("payment_states.#{payment.state}") %></td>
+          <td><%= payment.response_code %></td>
+          <td><%= payment.avs_response %></td>
+        </tr>
+  </table>
+
+</fieldset>

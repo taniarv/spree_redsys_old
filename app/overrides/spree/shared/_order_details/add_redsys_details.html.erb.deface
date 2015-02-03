@@ -1,0 +1,14 @@
+<!--
+  insert_bottom '.payment-info'
+
+-->
+<% order.payments.each do |payment| %>
+    <% if payment.source_type.to_s.include?('Redsys') %>
+        <span class="cc-type">
+            <%= image_tag 'credit_cards/credit_card.gif', :id => 'creditcard-redsys' %>
+            <%= t("payment_states.#{payment.state}") %>
+        </span>
+    <% end %>
+<% end %>
+
+

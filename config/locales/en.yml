@@ -1,0 +1,3 @@
+en:
+  order_processed_successfully: "Your order has been processed successfully. Thank you for your purchase!"
+  manual_admin_advert: "Manual admin order (in case of doubt, don't use it): complete, finalize (complete + mail), undo complete"

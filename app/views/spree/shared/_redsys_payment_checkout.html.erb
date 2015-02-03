@@ -1,0 +1,69 @@
+<%
+   require 'active_merchant/billing/integrations/action_view_helper'
+   ActionView::Base.send(:include, ActiveMerchant::Billing::Integrations::ActionViewHelper)
+
+   if @payment_method.kind_of?(Spree::BillingIntegration::RedsysPayment) &&
+           ( @payment_method.environment.to_s.include?('development') || @payment_method.preferred_test_mode )
+        ActiveMerchant::Billing::Base.integration_mode = :test
+   end
+%>
+<% content_for :head do %>
+    <script src="//ajax.googleapis.com/ajax/libs/dojo/1.8.8/dojo/dojo.js"></script>
+<% end %>
+<%
+   items = @order.line_items.map do |item|
+     price = (item.price * 100).to_i # convert for gateway
+     { Spree.t(:name)        => item.variant.product.name,
+       #Héctor Note 10/12/2014 Commeted to avoid html tags t(:description) => (item.variant.product.description[0..20]+"..." if item.variant.product.description),
+       Spree.t(:qty)    => item.quantity
+     }
+   end
+
+   #Order number starts with R (it's not allowed by redsys) and to change the order every time we add a time Stamp afterwards
+   order_number =  @order.number[1..9]
+   order_number += Time.now.strftime("%M%S")[1..3]
+%>
+
+<%= #form required :charset => "ISO-8859-1", Spree::Config[:site_name]
+    payment_service_for order_number, Spree::Config[:site_name] ,:amount => (@payment_method.amount_in_cents(@order.total)), :currency => @payment_method.preferred_currency, :service => :redsys do |service| %>
+    <% service.description  items.to_s[0..120].gsub(/({|")/,'').gsub(/}/,"\n").gsub("=>",": ").gsub("[","(").gsub("]",")")  %>
+    <% service.customer_name "#{@order.ship_address.firstname} #{@order.ship_address.lastname}"%>
+    <% service.language @payment_method.provider_class.language_code(I18n.locale) %>
+    <% #Ds_Merchant_UrlKO
+       service.failure_url edit_order_checkout_url(@order, :state => 'payment')
+    %>
+    <% #Ds_Merchant_UrlOK
+       service.success_url redsys_confirm_order_redsys_callbacks_url(@order, :payment_method_id => @payment_method)
+       # service.success_url redsys_notify_order_redsys_callbacks_url(@order, :payment_method_id => @payment_method)
+       #service.success_url order_url(@order)
+
+    %>
+    <% #Ds_Merchant_MerchantURL
+       if @payment_method.preferred_notify_alternative_domain_url.present?
+         service.notify_url(@payment_method.preferred_notify_alternative_domain_url + redsys_notify_order_redsys_callbacks_path(@order, :payment_method_id => @payment_method))
+       else
+         service.notify_url redsys_notify_order_redsys_callbacks_url(@order, :payment_method_id => @payment_method, :protocol => 'http')
+       end
+    %>
+    <%= #Redsys doesn't accept utf-8 charset
+        submit_tag "Go to payment gateway!", :class => 'clear', :style => 'display:none;'%>
+<%end%>
+<% content_for :head do %>
+<script>
+    var back_url = "<%= edit_order_checkout_url(@order, :state => 'payment')%>";
+
+    dojo.ready(function(){
+      // We use dojo hash to control browser history in case of back button is pressed; only affects firefox and opera, pending ie test
+      require(["dojo/hash"], function(hash){
+          var currentHash = hash();          
+          if (currentHash) { document.location.href = back_url; return; }
+          hash(back_url, true);
+          document.forms[0].acceptCharset = "ISO-8859-1";
+          document.forms[0].submit();
+      });
+    });
+
+</script>
+<% end %>
+
+
