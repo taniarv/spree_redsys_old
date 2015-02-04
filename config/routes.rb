@@ -14,6 +14,8 @@ Spree::Core::Engine.routes.draw do
         get :redsys_notify
         get :redsys_confirm
         post :redsys_confirm
+        get :redsys_error
+        post :redsys_error
       end
     end
   end

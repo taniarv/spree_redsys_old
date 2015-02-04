@@ -47,19 +47,19 @@ module Spree
           session[:order_id] = nil
           redirect_to completion_route(@order)
         else
+          flash[:alert] = @order.errors.full_messages.join("\n")
           redirect_to checkout_state_path(@order.state)
         end
       else
+        flash[:alert] = Spree.t(:spree_gateway_error_flash_for_checkout)
+        redirect_to checkout_state_path(@order.state)
       end
+    end
 
-      # unless @order.state == "complete"
-      #   order_upgrade()
-      # end
-      # Unset the order id as it's completed.
-      # session[:order_id] = nil
-      # flash[:notice] = I18n.t(:order_processed_successfully)
-      # flash[:commerce_tracking] = "true"
-      # redirect_to order_path(@order)
+    def redsys_error
+      @order ||= Spree::Order.find_by_number!(params[:order_id])
+      flash[:alert] = Spree.t(:spree_gateway_error_flash_for_checkout)
+      redirect_to checkout_state_path(@order.state)
     end
 
     def redsys_credentials
