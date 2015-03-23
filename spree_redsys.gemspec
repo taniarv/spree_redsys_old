@@ -2,7 +2,7 @@
 Gem::Specification.new do |s|
   s.platform    = Gem::Platform::RUBY
   s.name        = 'spree_redsys'
-  s.version     = '2.4.3'
+  s.version     = '3.0.0'
   s.summary     = 'Adds Redsys TPV as payment method for Spree'
   s.description = 'Redsys is an Spanish payment gateway. '
   s.required_ruby_version = '>= 1.9.3'
@@ -15,5 +15,5 @@ Gem::Specification.new do |s|
   s.require_path = 'lib'
   s.requirements << 'none'
 
-  s.add_dependency 'spree_core', '~> 2.4.3.beta'
+  s.add_dependency 'spree_core', '~> 3.0.0'
 end
