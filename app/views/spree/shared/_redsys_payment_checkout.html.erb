@@ -3,7 +3,7 @@
    ActionView::Base.send(:include, ActiveMerchant::Billing::Integrations::ActionViewHelper)
 
    if @payment_method.kind_of?(Spree::BillingIntegration::RedsysPayment) &&
-           ( @payment_method.environment.to_s.include?('development') || @payment_method.preferred_test_mode )
+           ( Rails.env.eql?('development') || @payment_method.preferred_test_mode )
         ActiveMerchant::Billing::Base.integration_mode = :test
    end
 %>
@@ -24,8 +24,8 @@
    order_number += Time.now.strftime("%M%S")[1..3]
 %>
 
-<%= #form required :charset => "ISO-8859-1", Spree::Config[:site_name]
-    payment_service_for order_number, Spree::Config[:site_name] ,:amount => (@payment_method.amount_in_cents(@order.total)), :currency => @payment_method.preferred_currency, :service => :redsys do |service| %>
+<%= #form required :charset => "ISO-8859-1", current_store.name
+    payment_service_for order_number, Spree::Store.current.name ,:amount => (@payment_method.amount_in_cents(@order.total)), :currency => @payment_method.preferred_currency, :service => :redsys do |service| %>
     <% service.description  items.to_s[0..120].gsub(/({|")/,'').gsub(/}/,"\n").gsub("=>",": ").gsub("[","(").gsub("]",")")  %>
     <% service.customer_name "#{@order.ship_address.firstname} #{@order.ship_address.lastname}"%>
     <% service.language @payment_method.provider_class.language_code(I18n.locale) %>
