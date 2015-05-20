@@ -43,7 +43,7 @@ module Spree
         @order.next
         if @order.complete?
           flash.notice = Spree.t(:order_processed_successfully)
-          flash[:commerce_tracking] = "nothing special"
+          # flash[:commerce_tracking] = "nothing special"
           session[:order_id] = nil
           redirect_to completion_route(@order)
         else
@@ -58,6 +58,7 @@ module Spree
 
     def redsys_error
       @order ||= Spree::Order.find_by_number!(params[:order_id])
+      @order.update_attribute(:payment_state, 'failed')
       flash[:alert] = Spree.t(:spree_gateway_error_flash_for_checkout)
       redirect_to checkout_state_path(@order.state)
     end
