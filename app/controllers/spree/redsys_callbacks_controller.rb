@@ -104,8 +104,8 @@ module Spree
                                         :avs_response => params['Ds_AuthorisationCode'].to_s)
       # , :without_protection => true
       payment.started_processing!
-      payment.processing.record_response(params)
-      # payment.process!
+      # payment.processing.record_response(params)
+      payment.process!
       @order.update(:considered_risky => 0)
     end
 
