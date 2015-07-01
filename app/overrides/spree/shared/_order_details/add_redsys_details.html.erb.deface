@@ -1,14 +1,14 @@
 <!--
-  insert_bottom '.payment-info'
+  replace_contents '.payment-info'
 
 -->
 <% order.payments.each do |payment| %>
-    <% if payment.source_type.to_s.include?('Redsys') %>
-        <span class="cc-type">
-            <%= image_tag 'credit_cards/credit_card.gif', :id => 'creditcard-redsys' %>
-            <%= t("payment_states.#{payment.state}") %>
-        </span>
-    <% end %>
+  <% if payment.source_type.to_s.include?('Redsys') && payment.state.eql?('completed') %>
+      <span class="cc-type">
+        <%= image_tag 'credit_cards/credit_card.gif', :id => 'creditcard-redsys' %>
+        <%= t('spree.redsys.credit_card_payment') %>
+      </span>
+  <% end %>
 <% end %>
 
 
