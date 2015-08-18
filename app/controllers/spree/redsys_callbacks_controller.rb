@@ -40,14 +40,18 @@ module Spree
           :avs_response => params['Ds_AuthorisationCode'].to_s
         })
         @order.updater.update_payment_total
-        @order.next
-        if @order.complete?
+
+        unless @order.next
+          flash[:error] = @order.errors.full_messages.join("\n")
+          redirect_to checkout_state_path(@order.state) and return
+        end
+
+        if @order.completed?
+          @current_order = nil
           flash.notice = Spree.t(:order_processed_successfully)
-          # flash[:commerce_tracking] = "nothing special"
-          session[:order_id] = nil
+          flash['order_completed'] = true
           redirect_to completion_route(@order)
         else
-          flash[:alert] = @order.errors.full_messages.join("\n")
           redirect_to checkout_state_path(@order.state)
         end
       else
