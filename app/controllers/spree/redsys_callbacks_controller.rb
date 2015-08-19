@@ -5,40 +5,26 @@ module Spree
 
     #ssl_required
 
-    # Receive a direct notification from the gateway
     def redsys_notify
       @order ||= Spree::Order.find_by_number!(params[:order_id])
       if check_signature
-        #TODO add source to payment
         unless @order.state == "complete"
           order_upgrade
         end
-        payment_upgrade(params)
-        @payment = Spree::Payment.find_by_order_id(@order)
+        payment_upgrade
         @payment.complete!
       else
-        @payment = payment_upgrade(params)
+        payment_upgrade
       end
       render :nothing => true
-    end
-
+    end 
 
     # Handle the incoming user
     def redsys_confirm
       @order ||= Spree::Order.find_by_number!(params[:order_id])
       if check_signature && redsys_payment_authorized?
         # create checkout
-
-        @order.payments.create!({
-          :source => Spree::RedsysCheckout.create({
-            :ds_params => params.except(:payment_method_id).to_json
-            }),
-          :amount => @order.total,
-          :payment_method => payment_method,
-          :state => "completed",
-          :response_code => params['Ds_Response'].to_s,
-          :avs_response => params['Ds_AuthorisationCode'].to_s
-        })
+        @order.payments.create!(payment_params.merge(:state => "completed"))
         @order.updater.update_payment_total
 
         unless @order.next
@@ -100,18 +86,29 @@ module Spree
       order_path(order, :token => order.guest_token)
     end
 
-    def payment_upgrade (params)
-      payment = @order.payments.create(:amount => @order.total,
-                                        :source_type => 'Spree:RedsysCreditCard',
-                                        :payment_method => payment_method,
-                                        :response_code => params['Ds_Response'].to_s,
-                                        :avs_response => params['Ds_AuthorisationCode'].to_s)
-      # , :without_protection => true
-      payment.started_processing!
-      # payment.processing.record_response(params)
-      payment.process!
-      @order.update(:considered_risky => 0)
+    def payment_params
+      {
+        :source => Spree::RedsysCheckout.create({
+          :ds_params => params.except(:payment_method_id).to_json
+          }),
+        :amount => @order.total,
+        :payment_method => payment_method,
+        :response_code => params['Ds_Response'].to_s,
+        :avs_response => params['Ds_AuthorisationCode'].to_s
+      }
     end
+
+    def payment_upgrade
+      @payment = Spree::Payment.find_by_order_id(@order)
+      if @payment.nil?
+        @payment = @order.payments.create(payment_params)
+        @payment.started_processing!
+      else
+        @payment.update_attributes(payment_params)
+      end
+      @payment.process!
+      @order.update(:considered_risky => 0)
+    end       
 
     def order_upgrade
       @order.update(:state => "complete", :considered_risky => 1,  :completed_at => Time.now)
@@ -121,8 +118,6 @@ module Spree
       end
       @order.finalize!
     end
-
-
 
   end
 end
