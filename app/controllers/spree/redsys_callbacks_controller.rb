@@ -23,14 +23,14 @@ module Spree
     def redsys_confirm
       @order ||= Spree::Order.find_by_number!(params[:order_id])
       if check_signature && redsys_payment_authorized?
-        # create checkout
-        @order.payments.create!(payment_params.merge(:state => "completed"))
-        @order.updater.update_payment_total
-        
-        unless @order.completed? || @order.next
-          flash[:error] = @order.errors.full_messages.join("\n")
-          redirect_to checkout_state_path(@order.state) and return
-        end
+        unless @order.completed?
+          @order.payments.create!(payment_params.merge(:state => "completed"))
+          @order.updater.update_payment_total
+          unless @order.next
+            flash[:error] = @order.errors.full_messages.join("\n")
+            redirect_to checkout_state_path(@order.state) and return
+          end
+        end  
 
         if @order.completed?
           @current_order = nil
