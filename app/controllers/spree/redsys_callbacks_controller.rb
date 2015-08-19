@@ -26,8 +26,8 @@ module Spree
         # create checkout
         @order.payments.create!(payment_params.merge(:state => "completed"))
         @order.updater.update_payment_total
-
-        unless @order.next
+        
+        unless @order.completed? || @order.next
           flash[:error] = @order.errors.full_messages.join("\n")
           redirect_to checkout_state_path(@order.state) and return
         end
