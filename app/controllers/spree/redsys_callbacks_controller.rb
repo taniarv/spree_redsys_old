@@ -8,11 +8,7 @@ module Spree
     def redsys_notify
       @order ||= Spree::Order.find_by_number!(params[:order_id])
       if check_signature
-        unless @order.state == "complete"
-          order_upgrade
-        end
-        payment_upgrade
-        @payment.complete!
+        process_order_payment
       else
         payment_upgrade
       end
@@ -23,22 +19,16 @@ module Spree
     def redsys_confirm
       @order ||= Spree::Order.find_by_number!(params[:order_id])
       if check_signature && redsys_payment_authorized?
-        unless @order.completed?
-          @order.payments.create!(payment_params.merge(:state => "completed"))
-          @order.updater.update_payment_total
-          unless @order.next
-            flash[:error] = @order.errors.full_messages.join("\n")
-            redirect_to checkout_state_path(@order.state) and return
-          end
-        end  
-
+        process_order_payment unless @order.completed?
+        
         if @order.completed?
-          @current_order = nil
           flash.notice = Spree.t(:order_processed_successfully)
-          flash['order_completed'] = true
+          flash[:order_completed] = true
+          session[:order_id] = nil
           redirect_to completion_route(@order)
         else
-          redirect_to checkout_state_path(@order.state)
+          flash[:error] = @order.errors.full_messages.join("\n")
+          redirect_to checkout_state_path(@order.state) and return
         end
       else
         flash[:alert] = Spree.t(:spree_gateway_error_flash_for_checkout)
@@ -110,13 +100,10 @@ module Spree
       @order.update(:considered_risky => 0)
     end       
 
-    def order_upgrade
-      @order.update(:state => "complete", :considered_risky => 1,  :completed_at => Time.now)
-      # Since we dont rely on state machine callback, we just explicitly call this method for spree_store_credits
-      if @order.respond_to?(:consume_users_credit, true)
-        @order.send(:consume_users_credit)
-      end
-      @order.finalize!
+    def process_order_payment
+      @order.payments.create!(payment_params)
+      @order.updater.update_payment_total
+      @order.next
     end
 
   end
