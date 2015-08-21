@@ -97,12 +97,9 @@ module Spree
       @payment = Spree::Payment.find_by_order_id(@order)
       if @payment.nil?
         @payment = @order.payments.create(payment_params)
-        @payment.started_processing!
       else
         @payment.update_attributes(payment_params)
       end
-      @payment.process!
-      @order.update(:considered_risky => 0)
     end       
 
   end
