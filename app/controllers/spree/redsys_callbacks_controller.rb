@@ -8,7 +8,8 @@ module Spree
     def redsys_notify
       @order ||= Spree::Order.find_by_number!(params[:order_id])
       if check_signature
-        process_order_payment
+        payment_upgrade
+        @order.updater.update_payment_total
       else
         payment_upgrade
       end
@@ -19,7 +20,11 @@ module Spree
     def redsys_confirm
       @order ||= Spree::Order.find_by_number!(params[:order_id])
       if check_signature && redsys_payment_authorized?
-        process_order_payment unless @order.completed?
+        unless @order.payments.any?(&:completed?)
+          payment_upgrade
+          @order.updater.update_payment_total
+        end
+        @order.next
         
         if @order.completed?
           flash.notice = Spree.t(:order_processed_successfully)
@@ -99,12 +104,6 @@ module Spree
       @payment.process!
       @order.update(:considered_risky => 0)
     end       
-
-    def process_order_payment
-      @order.payments.create!(payment_params)
-      @order.updater.update_payment_total
-      @order.next
-    end
 
   end
 end
