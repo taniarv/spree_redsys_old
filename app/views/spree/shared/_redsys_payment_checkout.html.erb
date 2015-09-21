@@ -27,7 +27,9 @@
 <%= #form required :charset => "ISO-8859-1", current_store.name
     payment_service_for order_number, Spree::Store.current.name ,:amount => (@payment_method.amount_in_cents(@order.total)), :currency => @payment_method.preferred_currency, :service => :redsys do |service| %>
     <% service.description  items.to_s[0..120].gsub(/({|")/,'').gsub(/}/,"\n").gsub("=>",": ").gsub("[","(").gsub("]",")")  %>
-    <% service.customer_name "#{@order.ship_address.firstname} #{@order.ship_address.lastname}"%>
+    <%- if !@order.respond_to?(:address_required?) || @order.address_required? -%>
+      <% service.customer_name "#{@order.ship_address.firstname} #{@order.ship_address.lastname}"%>
+    <%- end -%>
     <% service.language @payment_method.provider_class.language_code(I18n.locale) %>
     <% #Ds_Merchant_UrlKO
        # service.failure_url edit_order_checkout_url(@order, :state => 'payment')
