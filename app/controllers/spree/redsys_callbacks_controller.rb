@@ -6,6 +6,7 @@ module Spree
     #ssl_required
 
     def redsys_notify
+      logger.info "==== REDSYS#NOTIFY ==== order##{params[:order_id]} params# #{params.inspect}"
       @order ||= Spree::Order.find_by_number!(params[:order_id])
       if check_signature
         payment_upgrade
@@ -18,6 +19,7 @@ module Spree
 
     # Handle the incoming user
     def redsys_confirm
+      logger.info "==== REDSYS#CONFIRM ==== order##{params[:order_id]} params# #{params.inspect}"
       @order ||= Spree::Order.find_by_number!(params[:order_id])
       if check_signature && redsys_payment_authorized?
         unless @order.payments.any?(&:completed?)
@@ -42,6 +44,7 @@ module Spree
     end
 
     def redsys_error
+      logger.info "==== REDSYS#ERROR ==== order##{params[:order_id]} params# #{params.inspect}"
       @order ||= Spree::Order.find_by_number!(params[:order_id])
       @order.update_attribute(:payment_state, 'failed')
       flash[:alert] = Spree.t(:spree_gateway_error_flash_for_checkout)
