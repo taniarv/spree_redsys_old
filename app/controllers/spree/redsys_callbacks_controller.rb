@@ -21,13 +21,12 @@ module Spree
     def redsys_confirm
       logger.info "==== REDSYS#CONFIRM ==== order##{params[:order_id]} params# #{params.inspect}"
       @order ||= Spree::Order.find_by_number!(params[:order_id])
-      if check_signature && redsys_payment_authorized?
+      if check_signature
         unless @order.payments.any?(&:completed?)
           payment_upgrade
           @order.updater.update_payment_total
         end
         @order.next
-        
         if @order.completed?
           flash.notice = Spree.t(:order_processed_successfully)
           flash[:order_completed] = true
@@ -101,8 +100,10 @@ module Spree
       if @payment.nil?
         @payment = @order.payments.create(payment_params)
       else
-        @payment.update_attributes(payment_params)
+        this_payment_params = redsys_payment_authorized? ? payment_params.merge(state: 'completed') : payment_params
+        @payment.update_attributes(this_payment_params)
       end
+      @order.reload
     end       
 
   end
